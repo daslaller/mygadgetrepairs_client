@@ -1,0 +1,9 @@
+Future<void> main(List<String> args) async {
+  final client = MgrClient(apiKey: 'your_api_key');
+  try {
+    var result = await client.request(resource: Resources.inboundCall);
+    log('Result: $result');
+  } catch (e, st) {
+    log('Error in main: $e', stackTrace: st);
+  }
+}
