@@ -77,11 +77,6 @@ class MgrClient {
       queryParameters: queryParameters,
     );
 
-    if (!resource.supports(method)) {
-      throw ArgumentError(
-        'HTTP ${method.name.toUpperCase()} is not supported for ${resource.name}',
-      );
-    }
 
     final HttpClientRequest request = switch (method) {
       MgrRequestMethod.get when resource.descriptor.get => await httpClient.getUrl(uri),

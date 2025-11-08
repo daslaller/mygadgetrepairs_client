@@ -20,6 +20,14 @@ class ResourceDescriptor {
   final bool delete;
   final MgrParser<dynamic>? parser;
 
+  bool supports(MgrRequestMethod method) => switch (method) {
+        MgrRequestMethod.get => get,
+        MgrRequestMethod.post => post,
+        MgrRequestMethod.put => put,
+        MgrRequestMethod.patch => patch,
+        MgrRequestMethod.delete => delete,
+      };
+
   Uri buildUri({
     Map<String, String>? pathParameters,
     Map<String, dynamic>? queryParameters,
@@ -79,6 +87,7 @@ enum Resources {
   info(ResourceDescriptor(
     path: '/info',
     get: true,
+    parser: (data) => data as Map<String, dynamic>,
   )),
   paymentMethodCollection(ResourceDescriptor(
     path: '/paymentMethods',
