@@ -1,9 +1,51 @@
+import 'dart:developer';
+
+import 'package:mygadgetrepairs_client/mygadgetrepairs_client.dart';
+
 Future<void> main(List<String> args) async {
   final client = MgrClient(apiKey: 'your_api_key');
+
   try {
-    var result = await client.request(resource: Resources.inboundCall);
-    log('Result: $result');
+    final List<MgrCustomer>? customers = await client.request(
+      resource: Resources.customerCollection,
+      method: MgrRequestMethod.get,
+    );
+    log('Fetched ${customers?.length ?? 0} customers');
+
+    final String? newCustomerId = await client.request(
+      resource: Resources.customerCollection,
+      method: MgrRequestMethod.post,
+      body: {
+        'name': 'Example Customer',
+        'email': 'customer@example.com',
+        'mobile': '+441234567890',
+      },
+      parser: (data) => (data as Map<String, dynamic>)['id'] as String,
+    );
+    log('Created customer $newCustomerId');
+
+    final String? ticketId = await client.request(
+      resource: Resources.ticketCollection,
+      method: MgrRequestMethod.post,
+      body: {
+        'customerId': newCustomerId,
+        'shortInfo': 'Demo ticket created via API',
+        'status': 'New',
+      },
+      parser: (data) => (data as Map<String, dynamic>)['id'] as String,
+    );
+    log('Created ticket $ticketId');
+
+    final MgrTicket? ticket = await client.request(
+      resource: Resources.ticketMember,
+      method: MgrRequestMethod.get,
+      pathParameters: {'ticketId': ticketId ?? ''},
+      parser: (data) => MgrTicket.fromJson(data as Map<String, dynamic>),
+    );
+    log('Ticket status: ${ticket?.status}');
+  } on MgrApiException catch (e, st) {
+    log('API error: ${e.message ?? e.statusCode}', error: e, stackTrace: st);
   } catch (e, st) {
-    log('Error in main: $e', stackTrace: st);
+    log('Unexpected error: $e', stackTrace: st);
   }
 }

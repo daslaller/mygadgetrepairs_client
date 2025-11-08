@@ -1,161 +1,179 @@
 import 'dart:convert';
 import 'dart:io';
 
-enum Resources {
-  userMember('/users/{ID}', GET: true),
-  userCollection('/users', GET: true),
-  timeClockMember('/timeclock/{ID}', GET: true, PUT: false, DELETE: true),
-  timeClockCollection('/timeClock', GET: true),
-  taxRateCollection('/taxRates', GET: true, POST: true),
-  paymentMethodCollection('/paymentMethods', GET: true),
-  info('/info', GET: true),
-  rmmAlert('webhook/rmmAlert', GET: false, POST: true),
-  inboundCall('webhook/inboundCall', GET: false, POST: true);
+import 'models/models.dart';
+import 'request_method.dart';
 
-  final String baseURL = 'https://api.mygadgetrepairs.com/v1';
-  final String endpoint;
 
-  final bool GET;
-  final bool POST;
-  final bool PUT;
-  final bool PATCH;
-  final bool DELETE;
-  const Resources(
-    this.endpoint, {
-    this.GET = false,
-    this.POST = false,
-    this.PUT = false,
-    this.DELETE = false,
-    // ignore: unused_element_parameter
-    this.PATCH = false,
+class MgrApiException implements Exception {
+  final int statusCode;
+  final Uri? uri;
+  final dynamic body;
+  final String? message;
+
+  const MgrApiException({
+    required this.statusCode,
+    this.uri,
+    this.body,
+    this.message,
   });
-
-  // ignore: non_constant_identifier_names
-  Uri fullUrl({String ID = ''}) =>
-      Uri.parse('$baseURL/${endpoint.replaceFirst('{ID}', ID)}');
-}
-
-// Model for successful GET response
-class UserResource {
-  final String id;
-  final String name;
-  final String email;
-  final Map<String, dynamic> rawData;
-
-  UserResource({
-    required this.id,
-    required this.name,
-    required this.email,
-    required this.rawData,
-  });
-
-  factory UserResource.fromJson(Map<String, dynamic> json) {
-    return UserResource(
-      id: json['id'] as String,
-      name: json['name'] as String,
-      email: json['email'] as String,
-      rawData: json,
-    );
-  }
 
   @override
   String toString() {
-    return 'UserResource(id: $id, name: $name, email: $email)';
+    final buffer = StringBuffer('MgrApiException(')
+      ..write('statusCode: $statusCode');
+    if (uri != null) buffer.write(', uri: $uri');
+    if (message != null) buffer.write(', message: $message');
+    if (body != null && message == null) buffer.write(', body: $body');
+    buffer.write(')');
+    return buffer.toString();
   }
 }
 
 class MgrClient {
-  String apiKey;
-  final String accept;
-  final String contentType;
-  late Map<String, String> header;
-  HttpClient httpClient = HttpClient();
-  HttpClientCredentials credentials;
   MgrClient({
     required this.apiKey,
     this.contentType = 'application/json',
     this.accept = 'application/json',
-  }) : credentials = HttpClientBearerCredentials(apiKey) {
-    setHeader({
-      'Authorization': apiKey,
-      'Accept': accept,
-      'Content-Type': contentType,
-    });
+    HttpClient? httpClient,
+  }) : httpClient = httpClient ?? HttpClient() {
+    _refreshDefaultHeaders();
   }
-  set setApiKey(String apiKey) => this.apiKey = apiKey;
-  void setHeader(Map<String, String> header) => this.header = header;
 
-  request({required Resources resource}) async {
-    httpClient.addCredentials(
-      Uri.parse(resource.baseURL),
-      resource.endpoint,
-      credentials,
-    );
-    return switch (resource) {
-      Resources.inboundCall => await _post(resource: resource),
-      _ => throw Exception('Resource not implemented'),
+  String apiKey;
+  final String accept;
+  final String contentType;
+  final HttpClient httpClient;
+
+  late Map<String, String> header;
+
+  set setApiKey(String value) {
+    apiKey = value;
+    _refreshDefaultHeaders();
+  }
+
+  void setHeader(Map<String, String> header) =>
+      this.header = {...this.header, ...header};
+
+  void _refreshDefaultHeaders() {
+    header = <String, String>{
+      HttpHeaders.authorizationHeader: apiKey,
+      HttpHeaders.acceptHeader: accept,
+      HttpHeaders.contentTypeHeader: contentType,
     };
   }
 
-  Future<dynamic> _post({required Resources resource}) async {
-    //   final uri = Uri.parse(resource.fullUrl());
-    try {
-      final request = await httpClient.postUrl(resource.fullUrl());
-      HttpClientResponse response = await request.close();
-      final dynamic parsedBody = await _handleResponse(response);
-      if (parsedBody is Map<String, dynamic>) {
-        return UserResource.fromJson(parsedBody);
-      } else if (parsedBody is List) {
-        return parsedBody
-            .map((item) => UserResource.fromJson(item as Map<String, dynamic>))
-            .toList();
-      } else {
-        throw Exception(
-          'Unexpected response format for POST. Status: \\${response.statusCode}',
-        );
-      }
-    } on Exception catch (e) {
-      throw HttpException("Network error: \\$e");
-    }
-  }
-
-  // ignore: unused_element
-  _get({required Resources resource}) async {
-    // final uri = Uri.parse(endpoint);
-    try {
-      final request = await httpClient.getUrl(resource.fullUrl());
-      HttpClientResponse response = await request.close();
-      final dynamic parsedBody = await _handleResponse(response);
-      // For GET, it's typically a resource object or a list of them.
-      // This example assumes a single UserResource.
-      if (parsedBody is Map<String, dynamic>) {
-        return UserResource.fromJson(parsedBody);
-      } else if (parsedBody is List) {
-        return parsedBody
-            .map((item) => UserResource.fromJson(item as Map<String, dynamic>))
-            .toList();
-      } else {
-        throw Exception(
-          'Unexpected response format for GET. Status: ${response.statusCode}',
-        );
-      }
-    } on Exception catch (e) {
-      throw HttpException("Network error: $e");
-    }
-  }
-
-  static _handleResponse(HttpClientResponse response) async {
-    final body =
-        jsonDecode(Utf8Decoder().convert((await response.join()).codeUnits))
-            as Map<String, dynamic>;
-    void error() => throw Exception(
-      'Error code: ${response.statusCode} Response: $body Error: ${body['error']}',
+  Future<T?> request<T>({
+    required Resources resource,
+    required MgrRequestMethod method,
+    Map<String, String>? pathParameters,
+    Map<String, dynamic>? queryParameters,
+    Map<String, String>? headers,
+    Object? body,
+    MgrParser<T>? parser,
+  }) async {
+    final uri = resource.fullUrl(
+      pathParameters: pathParameters,
+      queryParameters: queryParameters,
     );
-    return switch (response.statusCode) {
-      200 => body,
-      400 => error(),
-      500 => error(),
-      _ => error(),
+
+    if (!resource.supports(method)) {
+      throw ArgumentError(
+        'HTTP ${method.name.toUpperCase()} is not supported for ${resource.name}',
+      );
+    }
+
+    final HttpClientRequest request = switch (method) {
+      MgrRequestMethod.get when resource.descriptor.get => await httpClient.getUrl(uri),
+      MgrRequestMethod.post when resource.descriptor.post => await httpClient.postUrl(uri),
+      MgrRequestMethod.put when resource.descriptor.put => await httpClient.putUrl(uri),
+      MgrRequestMethod.patch when resource.descriptor.patch => await httpClient.patchUrl(uri),
+      MgrRequestMethod.delete when resource.descriptor.delete => await httpClient.deleteUrl(uri),
+      _ => throw ArgumentError(
+          'HTTP ${method.name.toUpperCase()} is not supported for ${resource.name}',
+        ),
     };
+
+    final requestHeaders = {...header, if (headers != null) ...headers};
+    requestHeaders.forEach(request.headers.set);
+
+    if (body != null && method != MgrRequestMethod.get) {
+      await _writeBody(request, body);
+    }
+
+    final dynamic rawParser = parser ?? resource.parser;
+    final response = await request.close();
+    final parsed = await _handleResponse(response, uri: uri);
+
+    if (parsed == null) {
+      return null;
+    }
+
+    if (rawParser != null) {
+      return rawParser(parsed) as T;
+    }
+
+    return parsed as T?;
+  }
+
+  static Future<void> _writeBody(HttpClientRequest request, Object body) async {
+    switch (body) {
+      case String bodyString:
+        request.write(bodyString);
+      case List<int> bodyBytes:
+        request.add(bodyBytes);
+      case Map<String, dynamic> bodyMap:
+        request.write(jsonEncode(bodyMap));
+      case Iterable bodyIterable:
+        request.write(jsonEncode(bodyIterable));
+      default:
+        throw ArgumentError(
+          'Unsupported body type: ${body.runtimeType}. Provide String, bytes, Map, or Iterable.',
+        );
+    }
+    await request.flush();
+  }
+
+  static Future<dynamic> _handleResponse(
+    HttpClientResponse response, {
+    Uri? uri,
+  }) async {
+    final responseBody =
+        await response.transform(const Utf8Decoder()).join();
+
+    if (response.statusCode >= 200 && response.statusCode < 300) {
+      if (responseBody.isEmpty) {
+        return null;
+      }
+      try {
+        return jsonDecode(responseBody);
+      } on FormatException {
+        return responseBody;
+      }
+    }
+
+    dynamic errorBody;
+    if (responseBody.isNotEmpty) {
+      try {
+        errorBody = jsonDecode(responseBody);
+      } on FormatException {
+        errorBody = responseBody;
+      }
+    }
+
+    String? errorMessage;
+    if (errorBody is Map<String, dynamic>) {
+      final dynamic messageValue = errorBody['error'] ?? errorBody['message'];
+      if (messageValue != null) {
+        errorMessage = messageValue.toString();
+      }
+    }
+
+    throw MgrApiException(
+      statusCode: response.statusCode,
+      uri: uri,
+      body: errorBody,
+      message: errorMessage,
+    );
   }
 }
