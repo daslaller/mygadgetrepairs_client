@@ -1,15 +1,15 @@
-typedef _Json = Map<String, dynamic>;
+typedef Json = Map<String, dynamic>;
 
 typedef MgrParser<T> = T Function(dynamic data);
 
-String? _asString(_Json json, String key) {
+String? _asString(Json json, String key) {
   final value = json[key];
   if (value == null) return null;
   if (value is String) return value;
   return value.toString();
 }
 
-num? _asNum(_Json json, String key) {
+num? _asNum(Json json, String key) {
   final value = json[key];
   if (value == null) return null;
   if (value is num) return value;
@@ -17,7 +17,7 @@ num? _asNum(_Json json, String key) {
   return null;
 }
 
-bool? _asBool(_Json json, String key) {
+bool? _asBool(Json json, String key) {
   final value = json[key];
   if (value == null) return null;
   if (value is bool) return value;
@@ -37,7 +37,7 @@ bool? _asBool(_Json json, String key) {
   return null;
 }
 
-DateTime? _asDateTime(_Json json, String key) {
+DateTime? _asDateTime(Json json, String key) {
   final value = json[key];
   if (value == null) return null;
   if (value is DateTime) return value;
@@ -53,19 +53,19 @@ DateTime? _asDateTime(_Json json, String key) {
 
 List<T> _mapList<T>(
   dynamic data,
-  T Function(_Json json) builder,
+  T Function(Json json) builder,
 ) {
   if (data == null) return <T>[];
   if (data is List) {
     return data
-        .whereType<_Json>()
+        .whereType<Json>()
         .map(builder)
         .toList(growable: false);
   }
-  if (data is _Json && data['data'] is List) {
+  if (data is Json && data['data'] is List) {
     return _mapList<T>(data['data'], builder);
   }
-  if (data is _Json) {
+  if (data is Json) {
     return <T>[builder(data)];
   }
   throw ArgumentError(
@@ -75,7 +75,7 @@ List<T> _mapList<T>(
 
 abstract class MgrEntity {
   final String? id;
-  final _Json rawData;
+  final Json rawData;
 
   const MgrEntity({
     required this.rawData,
@@ -83,7 +83,7 @@ abstract class MgrEntity {
   });
 
   @override
-  String toString() => '${runtimeType}(id: $id)';
+  String toString() => '$runtimeType(id: $id)';
 }
 
 class MgrUser extends MgrEntity {
@@ -92,14 +92,14 @@ class MgrUser extends MgrEntity {
   final String? role;
 
   MgrUser({
-    String? id,
+    super.id,
     required super.rawData,
     this.name,
     this.email,
     this.role,
-  }) : super(id: id);
+  });
 
-  factory MgrUser.fromJson(_Json json) => MgrUser(
+  factory MgrUser.fromJson(Json json) => MgrUser(
         id: _asString(json, 'id'),
         rawData: json,
         name: _asString(json, 'name'),
@@ -118,15 +118,15 @@ class MgrTimeClockEntry extends MgrEntity {
   final num? durationMinutes;
 
   MgrTimeClockEntry({
-    String? id,
+    super.id,
     required super.rawData,
     this.userId,
     this.clockIn,
     this.clockOut,
     this.durationMinutes,
-  }) : super(id: id);
+  });
 
-  factory MgrTimeClockEntry.fromJson(_Json json) => MgrTimeClockEntry(
+  factory MgrTimeClockEntry.fromJson(Json json) => MgrTimeClockEntry(
         id: _asString(json, 'id'),
         rawData: json,
         userId: _asString(json, 'userId'),
@@ -144,13 +144,13 @@ class MgrPaymentMethod extends MgrEntity {
   final bool? isDefault;
 
   MgrPaymentMethod({
-    String? id,
+    super.id,
     required super.rawData,
     this.name,
     this.isDefault,
-  }) : super(id: id);
+  });
 
-  factory MgrPaymentMethod.fromJson(_Json json) => MgrPaymentMethod(
+  factory MgrPaymentMethod.fromJson(Json json) => MgrPaymentMethod(
         id: _asString(json, 'id'),
         rawData: json,
         name: _asString(json, 'name'),
@@ -166,13 +166,13 @@ class MgrTaxRate extends MgrEntity {
   final num? rate;
 
   MgrTaxRate({
-    String? id,
+    super.id,
     required super.rawData,
     this.name,
     this.rate,
-  }) : super(id: id);
+  });
 
-  factory MgrTaxRate.fromJson(_Json json) => MgrTaxRate(
+  factory MgrTaxRate.fromJson(Json json) => MgrTaxRate(
         id: _asString(json, 'id'),
         rawData: json,
         name: _asString(json, 'name'),
@@ -192,7 +192,7 @@ class MgrCustomer extends MgrEntity {
   final DateTime? createdAt;
 
   MgrCustomer({
-    String? id,
+    super.id,
     required super.rawData,
     this.name,
     this.email,
@@ -200,9 +200,9 @@ class MgrCustomer extends MgrEntity {
     this.phone,
     this.company,
     this.createdAt,
-  }) : super(id: id);
+  });
 
-  factory MgrCustomer.fromJson(_Json json) => MgrCustomer(
+  factory MgrCustomer.fromJson(Json json) => MgrCustomer(
         id: _asString(json, 'id'),
         rawData: json,
         name: _asString(json, 'name'),
@@ -224,15 +224,15 @@ class MgrReminder extends MgrEntity {
   final bool? completed;
 
   MgrReminder({
-    String? id,
+    super.id,
     required super.rawData,
     this.subject,
     this.assignedTo,
     this.dueAt,
     this.completed,
-  }) : super(id: id);
+  });
 
-  factory MgrReminder.fromJson(_Json json) => MgrReminder(
+  factory MgrReminder.fromJson(Json json) => MgrReminder(
         id: _asString(json, 'id'),
         rawData: json,
         subject: _asString(json, 'subject'),
@@ -253,16 +253,16 @@ class MgrAppointment extends MgrEntity {
   final String? location;
 
   MgrAppointment({
-    String? id,
+    super.id,
     required super.rawData,
     this.title,
     this.startAt,
     this.endAt,
     this.customerId,
     this.location,
-  }) : super(id: id);
+  });
 
-  factory MgrAppointment.fromJson(_Json json) => MgrAppointment(
+  factory MgrAppointment.fromJson(Json json) => MgrAppointment(
         id: _asString(json, 'id'),
         rawData: json,
         title: _asString(json, 'title') ?? _asString(json, 'subject'),
@@ -283,15 +283,15 @@ class MgrPurchase extends MgrEntity {
   final DateTime? createdAt;
 
   MgrPurchase({
-    String? id,
+    super.id,
     required super.rawData,
     this.reference,
     this.total,
     this.supplierId,
     this.createdAt,
-  }) : super(id: id);
+  });
 
-  factory MgrPurchase.fromJson(_Json json) => MgrPurchase(
+  factory MgrPurchase.fromJson(Json json) => MgrPurchase(
         id: _asString(json, 'id'),
         rawData: json,
         reference: _asString(json, 'reference'),
@@ -311,15 +311,15 @@ class MgrSupplier extends MgrEntity {
   final String? accountNumber;
 
   MgrSupplier({
-    String? id,
+    super.id,
     required super.rawData,
     this.name,
     this.email,
     this.phone,
     this.accountNumber,
-  }) : super(id: id);
+  });
 
-  factory MgrSupplier.fromJson(_Json json) => MgrSupplier(
+  factory MgrSupplier.fromJson(Json json) => MgrSupplier(
         id: _asString(json, 'id'),
         rawData: json,
         name: _asString(json, 'name'),
@@ -339,15 +339,15 @@ class MgrPurchaseOrder extends MgrEntity {
   final DateTime? createdAt;
 
   MgrPurchaseOrder({
-    String? id,
+    super.id,
     required super.rawData,
     this.number,
     this.total,
     this.supplierId,
     this.createdAt,
-  }) : super(id: id);
+  });
 
-  factory MgrPurchaseOrder.fromJson(_Json json) => MgrPurchaseOrder(
+  factory MgrPurchaseOrder.fromJson(Json json) => MgrPurchaseOrder(
         id: _asString(json, 'id'),
         rawData: json,
         number: _asString(json, 'number'),
@@ -368,16 +368,16 @@ class MgrProduct extends MgrEntity {
   final num? price;
 
   MgrProduct({
-    String? id,
+    super.id,
     required super.rawData,
     this.name,
     this.sku,
     this.brandId,
     this.categoryId,
     this.price,
-  }) : super(id: id);
+  });
 
-  factory MgrProduct.fromJson(_Json json) => MgrProduct(
+  factory MgrProduct.fromJson(Json json) => MgrProduct(
         id: _asString(json, 'id'),
         rawData: json,
         name: _asString(json, 'name'),
@@ -397,14 +397,14 @@ class MgrModel extends MgrEntity {
   final String? categoryId;
 
   MgrModel({
-    String? id,
+    super.id,
     required super.rawData,
     this.name,
     this.brandId,
     this.categoryId,
-  }) : super(id: id);
+  });
 
-  factory MgrModel.fromJson(_Json json) => MgrModel(
+  factory MgrModel.fromJson(Json json) => MgrModel(
         id: _asString(json, 'id'),
         rawData: json,
         name: _asString(json, 'name'),
@@ -420,12 +420,12 @@ class MgrModelGroup extends MgrEntity {
   final String? name;
 
   MgrModelGroup({
-    String? id,
+    super.id,
     required super.rawData,
     this.name,
-  }) : super(id: id);
+  });
 
-  factory MgrModelGroup.fromJson(_Json json) => MgrModelGroup(
+  factory MgrModelGroup.fromJson(Json json) => MgrModelGroup(
         id: _asString(json, 'id'),
         rawData: json,
         name: _asString(json, 'name'),
@@ -439,12 +439,12 @@ class MgrBrand extends MgrEntity {
   final String? name;
 
   MgrBrand({
-    String? id,
+    super.id,
     required super.rawData,
     this.name,
-  }) : super(id: id);
+  });
 
-  factory MgrBrand.fromJson(_Json json) => MgrBrand(
+  factory MgrBrand.fromJson(Json json) => MgrBrand(
         id: _asString(json, 'id'),
         rawData: json,
         name: _asString(json, 'name'),
@@ -459,13 +459,13 @@ class MgrCategory extends MgrEntity {
   final String? parentId;
 
   MgrCategory({
-    String? id,
+    super.id,
     required super.rawData,
     this.name,
     this.parentId,
-  }) : super(id: id);
+  });
 
-  factory MgrCategory.fromJson(_Json json) => MgrCategory(
+  factory MgrCategory.fromJson(Json json) => MgrCategory(
         id: _asString(json, 'id'),
         rawData: json,
         name: _asString(json, 'name'),
@@ -482,14 +482,14 @@ class MgrStockItem extends MgrEntity {
   final String? location;
 
   MgrStockItem({
-    String? id,
+    super.id,
     required super.rawData,
     this.productId,
     this.quantity,
     this.location,
-  }) : super(id: id);
+  });
 
-  factory MgrStockItem.fromJson(_Json json) => MgrStockItem(
+  factory MgrStockItem.fromJson(Json json) => MgrStockItem(
         id: _asString(json, 'id'),
         rawData: json,
         productId: _asString(json, 'productId'),
@@ -507,14 +507,14 @@ class MgrStockCount extends MgrEntity {
   final DateTime? countedAt;
 
   MgrStockCount({
-    String? id,
+    super.id,
     required super.rawData,
     this.productId,
     this.counted,
     this.countedAt,
-  }) : super(id: id);
+  });
 
-  factory MgrStockCount.fromJson(_Json json) => MgrStockCount(
+  factory MgrStockCount.fromJson(Json json) => MgrStockCount(
         id: _asString(json, 'id'),
         rawData: json,
         productId: _asString(json, 'productId'),
@@ -532,14 +532,14 @@ class MgrSerial extends MgrEntity {
   final String? status;
 
   MgrSerial({
-    String? id,
+    super.id,
     required super.rawData,
     this.productId,
     this.serialNumber,
     this.status,
-  }) : super(id: id);
+  });
 
-  factory MgrSerial.fromJson(_Json json) => MgrSerial(
+  factory MgrSerial.fromJson(Json json) => MgrSerial(
         id: _asString(json, 'id'),
         rawData: json,
         productId: _asString(json, 'productId'),
@@ -559,14 +559,14 @@ class MgrAdjustment extends MgrEntity {
   final String? reason;
 
   MgrAdjustment({
-    String? id,
+    super.id,
     required super.rawData,
     this.productId,
     this.quantity,
     this.reason,
-  }) : super(id: id);
+  });
 
-  factory MgrAdjustment.fromJson(_Json json) => MgrAdjustment(
+  factory MgrAdjustment.fromJson(Json json) => MgrAdjustment(
         id: _asString(json, 'id'),
         rawData: json,
         productId: _asString(json, 'productId'),
@@ -583,13 +583,13 @@ class MgrWarranty extends MgrEntity {
   final num? months;
 
   MgrWarranty({
-    String? id,
+    super.id,
     required super.rawData,
     this.name,
     this.months,
-  }) : super(id: id);
+  });
 
-  factory MgrWarranty.fromJson(_Json json) => MgrWarranty(
+  factory MgrWarranty.fromJson(Json json) => MgrWarranty(
         id: _asString(json, 'id'),
         rawData: json,
         name: _asString(json, 'name'),
@@ -605,13 +605,13 @@ class MgrGroup extends MgrEntity {
   final String? description;
 
   MgrGroup({
-    String? id,
+    super.id,
     required super.rawData,
     this.name,
     this.description,
-  }) : super(id: id);
+  });
 
-  factory MgrGroup.fromJson(_Json json) => MgrGroup(
+  factory MgrGroup.fromJson(Json json) => MgrGroup(
         id: _asString(json, 'id'),
         rawData: json,
         name: _asString(json, 'name'),
@@ -629,15 +629,15 @@ class MgrAsset extends MgrEntity {
   final String? serial;
 
   MgrAsset({
-    String? id,
+    super.id,
     required super.rawData,
     this.name,
     this.typeId,
     this.customerId,
     this.serial,
-  }) : super(id: id);
+  });
 
-  factory MgrAsset.fromJson(_Json json) => MgrAsset(
+  factory MgrAsset.fromJson(Json json) => MgrAsset(
         id: _asString(json, 'id'),
         rawData: json,
         name: _asString(json, 'name'),
@@ -654,12 +654,12 @@ class MgrAssetType extends MgrEntity {
   final String? name;
 
   MgrAssetType({
-    String? id,
+    super.id,
     required super.rawData,
     this.name,
-  }) : super(id: id);
+  });
 
-  factory MgrAssetType.fromJson(_Json json) => MgrAssetType(
+  factory MgrAssetType.fromJson(Json json) => MgrAssetType(
         id: _asString(json, 'id'),
         rawData: json,
         name: _asString(json, 'name'),
@@ -674,13 +674,13 @@ class MgrAssetCustomField extends MgrEntity {
   final String? valueType;
 
   MgrAssetCustomField({
-    String? id,
+    super.id,
     required super.rawData,
     this.label,
     this.valueType,
-  }) : super(id: id);
+  });
 
-  factory MgrAssetCustomField.fromJson(_Json json) => MgrAssetCustomField(
+  factory MgrAssetCustomField.fromJson(Json json) => MgrAssetCustomField(
         id: _asString(json, 'id'),
         rawData: json,
         label: _asString(json, 'label'),
@@ -699,16 +699,16 @@ class MgrTicket extends MgrEntity {
   final DateTime? createdAt;
 
   MgrTicket({
-    String? id,
+    super.id,
     required super.rawData,
     this.shortInfo,
     this.status,
     this.customerId,
     this.technicianId,
     this.createdAt,
-  }) : super(id: id);
+  });
 
-  factory MgrTicket.fromJson(_Json json) => MgrTicket(
+  factory MgrTicket.fromJson(Json json) => MgrTicket(
         id: _asString(json, 'id') ?? _asString(json, 'ticketId'),
         rawData: json,
         shortInfo: _asString(json, 'shortInfo') ?? _asString(json, 'subject'),
@@ -729,15 +729,15 @@ class MgrTicketItemLine extends MgrEntity {
   final num? price;
 
   MgrTicketItemLine({
-    String? id,
+    super.id,
     required super.rawData,
     this.ticketId,
     this.productId,
     this.quantity,
     this.price,
-  }) : super(id: id);
+  });
 
-  factory MgrTicketItemLine.fromJson(_Json json) => MgrTicketItemLine(
+  factory MgrTicketItemLine.fromJson(Json json) => MgrTicketItemLine(
         id: _asString(json, 'id'),
         rawData: json,
         ticketId: _asString(json, 'ticketId'),
@@ -758,16 +758,16 @@ class MgrTicketTimer extends MgrEntity {
   final num? durationMinutes;
 
   MgrTicketTimer({
-    String? id,
+    super.id,
     required super.rawData,
     this.ticketId,
     this.userId,
     this.startedAt,
     this.stoppedAt,
     this.durationMinutes,
-  }) : super(id: id);
+  });
 
-  factory MgrTicketTimer.fromJson(_Json json) => MgrTicketTimer(
+  factory MgrTicketTimer.fromJson(Json json) => MgrTicketTimer(
         id: _asString(json, 'id'),
         rawData: json,
         ticketId: _asString(json, 'ticketId'),
@@ -789,15 +789,15 @@ class MgrTicketComment extends MgrEntity {
   final DateTime? createdAt;
 
   MgrTicketComment({
-    String? id,
+    super.id,
     required super.rawData,
     this.ticketId,
     this.authorId,
     this.note,
     this.createdAt,
-  }) : super(id: id);
+  });
 
-  factory MgrTicketComment.fromJson(_Json json) => MgrTicketComment(
+  factory MgrTicketComment.fromJson(Json json) => MgrTicketComment(
         id: _asString(json, 'id'),
         rawData: json,
         ticketId: _asString(json, 'ticketId'),
@@ -817,15 +817,15 @@ class MgrTicketInvoice extends MgrEntity {
   final DateTime? createdAt;
 
   MgrTicketInvoice({
-    String? id,
+    super.id,
     required super.rawData,
     this.ticketId,
     this.number,
     this.total,
     this.createdAt,
-  }) : super(id: id);
+  });
 
-  factory MgrTicketInvoice.fromJson(_Json json) => MgrTicketInvoice(
+  factory MgrTicketInvoice.fromJson(Json json) => MgrTicketInvoice(
         id: _asString(json, 'id'),
         rawData: json,
         ticketId: _asString(json, 'ticketId'),
@@ -844,14 +844,14 @@ class MgrPosInvoice extends MgrEntity {
   final num? total;
 
   MgrPosInvoice({
-    String? id,
+    super.id,
     required super.rawData,
     this.orderId,
     this.number,
     this.total,
-  }) : super(id: id);
+  });
 
-  factory MgrPosInvoice.fromJson(_Json json) => MgrPosInvoice(
+  factory MgrPosInvoice.fromJson(Json json) => MgrPosInvoice(
         id: _asString(json, 'id'),
         rawData: json,
         orderId: _asString(json, 'orderId'),
@@ -867,12 +867,12 @@ class MgrIssueType extends MgrEntity {
   final String? name;
 
   MgrIssueType({
-    String? id,
+    super.id,
     required super.rawData,
     this.name,
-  }) : super(id: id);
+  });
 
-  factory MgrIssueType.fromJson(_Json json) => MgrIssueType(
+  factory MgrIssueType.fromJson(Json json) => MgrIssueType(
         id: _asString(json, 'id'),
         rawData: json,
         name: _asString(json, 'name'),
@@ -887,13 +887,13 @@ class MgrStatus extends MgrEntity {
   final String? category;
 
   MgrStatus({
-    String? id,
+    super.id,
     required super.rawData,
     this.name,
     this.category,
-  }) : super(id: id);
+  });
 
-  factory MgrStatus.fromJson(_Json json) => MgrStatus(
+  factory MgrStatus.fromJson(Json json) => MgrStatus(
         id: _asString(json, 'id'),
         rawData: json,
         name: _asString(json, 'name'),
@@ -912,16 +912,16 @@ class MgrPayment extends MgrEntity {
   final String? methodId;
 
   MgrPayment({
-    String? id,
+    super.id,
     required super.rawData,
     this.reference,
     this.customerId,
     this.amount,
     this.paidAt,
     this.methodId,
-  }) : super(id: id);
+  });
 
-  factory MgrPayment.fromJson(_Json json) => MgrPayment(
+  factory MgrPayment.fromJson(Json json) => MgrPayment(
         id: _asString(json, 'id'),
         rawData: json,
         reference: _asString(json, 'reference'),
@@ -941,14 +941,14 @@ class MgrPreset extends MgrEntity {
   final String? description;
 
   MgrPreset({
-    String? id,
+    super.id,
     required super.rawData,
     this.name,
     this.categoryId,
     this.description,
-  }) : super(id: id);
+  });
 
-  factory MgrPreset.fromJson(_Json json) => MgrPreset(
+  factory MgrPreset.fromJson(Json json) => MgrPreset(
         id: _asString(json, 'id'),
         rawData: json,
         name: _asString(json, 'name'),
@@ -967,15 +967,15 @@ class MgrLead extends MgrEntity {
   final DateTime? createdAt;
 
   MgrLead({
-    String? id,
+    super.id,
     required super.rawData,
     this.name,
     this.email,
     this.status,
     this.createdAt,
-  }) : super(id: id);
+  });
 
-  factory MgrLead.fromJson(_Json json) => MgrLead(
+  factory MgrLead.fromJson(Json json) => MgrLead(
         id: _asString(json, 'id'),
         rawData: json,
         name: _asString(json, 'name'),
@@ -995,15 +995,15 @@ class MgrEstimate extends MgrEntity {
   final DateTime? createdAt;
 
   MgrEstimate({
-    String? id,
+    super.id,
     required super.rawData,
     this.number,
     this.customerId,
     this.total,
     this.createdAt,
-  }) : super(id: id);
+  });
 
-  factory MgrEstimate.fromJson(_Json json) => MgrEstimate(
+  factory MgrEstimate.fromJson(Json json) => MgrEstimate(
         id: _asString(json, 'id'),
         rawData: json,
         number: _asString(json, 'number'),
@@ -1022,14 +1022,14 @@ class MgrCustomField extends MgrEntity {
   final String? appliesTo;
 
   MgrCustomField({
-    String? id,
+    super.id,
     required super.rawData,
     this.name,
     this.type,
     this.appliesTo,
-  }) : super(id: id);
+  });
 
-  factory MgrCustomField.fromJson(_Json json) => MgrCustomField(
+  factory MgrCustomField.fromJson(Json json) => MgrCustomField(
         id: _asString(json, 'id'),
         rawData: json,
         name: _asString(json, 'name'),
@@ -1048,13 +1048,13 @@ class MgrTaskList extends MgrEntity {
   final String? description;
 
   MgrTaskList({
-    String? id,
+    super.id,
     required super.rawData,
     this.name,
     this.description,
-  }) : super(id: id);
+  });
 
-  factory MgrTaskList.fromJson(_Json json) => MgrTaskList(
+  factory MgrTaskList.fromJson(Json json) => MgrTaskList(
         id: _asString(json, 'id'),
         rawData: json,
         name: _asString(json, 'name'),
@@ -1072,15 +1072,15 @@ class MgrProject extends MgrEntity {
   final DateTime? createdAt;
 
   MgrProject({
-    String? id,
+    super.id,
     required super.rawData,
     this.name,
     this.customerId,
     this.statusId,
     this.createdAt,
-  }) : super(id: id);
+  });
 
-  factory MgrProject.fromJson(_Json json) => MgrProject(
+  factory MgrProject.fromJson(Json json) => MgrProject(
         id: _asString(json, 'id'),
         rawData: json,
         name: _asString(json, 'name'),
@@ -1101,16 +1101,16 @@ class MgrProjectTask extends MgrEntity {
   final bool? completed;
 
   MgrProjectTask({
-    String? id,
+    super.id,
     required super.rawData,
     this.projectId,
     this.name,
     this.assignedTo,
     this.dueAt,
     this.completed,
-  }) : super(id: id);
+  });
 
-  factory MgrProjectTask.fromJson(_Json json) => MgrProjectTask(
+  factory MgrProjectTask.fromJson(Json json) => MgrProjectTask(
         id: _asString(json, 'id'),
         rawData: json,
         projectId: _asString(json, 'projectId'),
@@ -1128,12 +1128,12 @@ class MgrProjectTag extends MgrEntity {
   final String? name;
 
   MgrProjectTag({
-    String? id,
+    super.id,
     required super.rawData,
     this.name,
-  }) : super(id: id);
+  });
 
-  factory MgrProjectTag.fromJson(_Json json) => MgrProjectTag(
+  factory MgrProjectTag.fromJson(Json json) => MgrProjectTag(
         id: _asString(json, 'id'),
         rawData: json,
         name: _asString(json, 'name'),
@@ -1147,12 +1147,12 @@ class MgrProjectStatus extends MgrEntity {
   final String? name;
 
   MgrProjectStatus({
-    String? id,
+    super.id,
     required super.rawData,
     this.name,
-  }) : super(id: id);
+  });
 
-  factory MgrProjectStatus.fromJson(_Json json) => MgrProjectStatus(
+  factory MgrProjectStatus.fromJson(Json json) => MgrProjectStatus(
         id: _asString(json, 'id'),
         rawData: json,
         name: _asString(json, 'name'),
@@ -1168,14 +1168,14 @@ class MgrProjectMilestone extends MgrEntity {
   final DateTime? dueAt;
 
   MgrProjectMilestone({
-    String? id,
+    super.id,
     required super.rawData,
     this.projectId,
     this.name,
     this.dueAt,
-  }) : super(id: id);
+  });
 
-  factory MgrProjectMilestone.fromJson(_Json json) => MgrProjectMilestone(
+  factory MgrProjectMilestone.fromJson(Json json) => MgrProjectMilestone(
         id: _asString(json, 'id'),
         rawData: json,
         projectId: _asString(json, 'projectId'),
@@ -1194,15 +1194,15 @@ class MgrProjectMessage extends MgrEntity {
   final DateTime? createdAt;
 
   MgrProjectMessage({
-    String? id,
+    super.id,
     required super.rawData,
     this.projectId,
     this.authorId,
     this.message,
     this.createdAt,
-  }) : super(id: id);
+  });
 
-  factory MgrProjectMessage.fromJson(_Json json) => MgrProjectMessage(
+  factory MgrProjectMessage.fromJson(Json json) => MgrProjectMessage(
         id: _asString(json, 'id'),
         rawData: json,
         projectId: _asString(json, 'projectId'),
@@ -1219,12 +1219,12 @@ class MgrProjectCategory extends MgrEntity {
   final String? name;
 
   MgrProjectCategory({
-    String? id,
+    super.id,
     required super.rawData,
     this.name,
-  }) : super(id: id);
+  });
 
-  factory MgrProjectCategory.fromJson(_Json json) => MgrProjectCategory(
+  factory MgrProjectCategory.fromJson(Json json) => MgrProjectCategory(
         id: _asString(json, 'id'),
         rawData: json,
         name: _asString(json, 'name'),
@@ -1240,14 +1240,14 @@ class MgrShipment extends MgrEntity {
   final DateTime? shippedAt;
 
   MgrShipment({
-    String? id,
+    super.id,
     required super.rawData,
     this.number,
     this.carrier,
     this.shippedAt,
-  }) : super(id: id);
+  });
 
-  factory MgrShipment.fromJson(_Json json) => MgrShipment(
+  factory MgrShipment.fromJson(Json json) => MgrShipment(
         id: _asString(json, 'id'),
         rawData: json,
         number: _asString(json, 'number'),
@@ -1265,14 +1265,14 @@ class MgrPoOnHold extends MgrEntity {
   final DateTime? createdAt;
 
   MgrPoOnHold({
-    String? id,
+    super.id,
     required super.rawData,
     this.orderId,
     this.reason,
     this.createdAt,
-  }) : super(id: id);
+  });
 
-  factory MgrPoOnHold.fromJson(_Json json) => MgrPoOnHold(
+  factory MgrPoOnHold.fromJson(Json json) => MgrPoOnHold(
         id: _asString(json, 'id'),
         rawData: json,
         orderId: _asString(json, 'orderId'),
@@ -1291,15 +1291,15 @@ class MgrExpense extends MgrEntity {
   final DateTime? incurredOn;
 
   MgrExpense({
-    String? id,
+    super.id,
     required super.rawData,
     this.categoryId,
     this.amount,
     this.vendor,
     this.incurredOn,
-  }) : super(id: id);
+  });
 
-  factory MgrExpense.fromJson(_Json json) => MgrExpense(
+  factory MgrExpense.fromJson(Json json) => MgrExpense(
         id: _asString(json, 'id'),
         rawData: json,
         categoryId: _asString(json, 'categoryId'),
@@ -1317,12 +1317,12 @@ class MgrExpenseCategory extends MgrEntity {
   final String? name;
 
   MgrExpenseCategory({
-    String? id,
+    super.id,
     required super.rawData,
     this.name,
-  }) : super(id: id);
+  });
 
-  factory MgrExpenseCategory.fromJson(_Json json) => MgrExpenseCategory(
+  factory MgrExpenseCategory.fromJson(Json json) => MgrExpenseCategory(
         id: _asString(json, 'id'),
         rawData: json,
         name: _asString(json, 'name'),
@@ -1338,14 +1338,14 @@ class MgrNotification extends MgrEntity {
   final DateTime? createdAt;
 
   MgrNotification({
-    String? id,
+    super.id,
     required super.rawData,
     this.title,
     this.message,
     this.createdAt,
-  }) : super(id: id);
+  });
 
-  factory MgrNotification.fromJson(_Json json) => MgrNotification(
+  factory MgrNotification.fromJson(Json json) => MgrNotification(
         id: _asString(json, 'id'),
         rawData: json,
         title: _asString(json, 'title'),
